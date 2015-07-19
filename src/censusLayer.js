@@ -2,14 +2,16 @@ define([
 	'jquery',
 	'leaflet',
 	'topojson',
-	'colorbrewer'
-	], function($, L, topojson, colorbrewer){
+	'colorbrewer',
+    'hoverTract',
+    'colors'
+], function($, L, topojson, colorbrewer, hoverTract, colors){
 
 
 	var CensusLayer = L.Class.extend({
 
-	    initialize: function (iMap,iDataPath) {
-        // save position of the layer or any options from the constructor
+	  initialize: function (iMap,iDataPath) {
+           // save position of the layer or any options from the constructor
 
 		   	this._datapath = iDataPath;
 
@@ -275,16 +277,30 @@ define([
 			   		});
 
 					var self = this;
-					$.each(geojsonLayer._layers,function(idx,layer){
-						layer.feature.map_mouse_over = false;
-						layer.on("mouseover", function (e) {
-					        e.target.feature.map_mouse_over = true;
-						   e.target.setStyle(self._styleFunction(e.target.feature, true));
-						});
-						layer.on("mouseout", function (e) {
-						   e.target.feature.map_mouse_over = false;
-						   e.target.setStyle(self._styleFunction(e.target.feature));
-						});
+				    $.each(geojsonLayer._layers,function(idx,layer){
+                                        var feature = layer.feature;
+                                            layer.feature.map_mouse_over = false;
+                                            hoverTract.watchForValue(feature.id,
+                                                         function() {
+                                                             layer.setStyle(self._styleFunction(feature, true));
+                                                         },
+                                                         function() {
+                                                             layer.setStyle(self._styleFunction(feature));
+                                                         });
+					    layer.on("mouseover", function (e) {
+                                                hoverTract.select(feature.id,
+                                                                  feature,
+                                                                  self.getPropertyData(),
+                                                                  colorbrewer[self._colorBrewerName]);
+ 					              feature.map_mouse_over = true;
+ 					         });
+					    layer.on("mouseout", function (e) {
+						       feature.map_mouse_over = false;
+                                                // TODO: Move this somewhere else
+						       hoverTract.select(null);
+					    });
+
+
 					});
 
 					if (this._layers_id[add[i]]) {
@@ -315,7 +331,7 @@ define([
 
 					 if (val) {
 						if ((typeof(highlight)!=="undefined") || feature.map_mouse_over==true) {
-					 		return {"fillColor": this._getColor(prop.serie,val) , "color" : "#f00" , "weight": 6 , "opacity" : 1.0,  "fillOpacity": 0.6};
+					 		return {"fillColor": this._getColor(prop.serie, val) , "color" : "#404040" , "weight": 4 , "opacity" : 1.0,  "fillOpacity": 0.6};
 						} else {
 							return {"fillColor": this._getColor(prop.serie,val) ,  "weight": 0 , "opacity" : 0.0,  "fillOpacity": 0.6};
 						}
@@ -328,14 +344,9 @@ define([
 
 		  },
 
-			_getColor : function(geo,val){
-				for (var i in geo) {
-					if ((val-geo[i]>=0) && (val-geo[parseInt(i)+1]<0)) {
-						return colorbrewer[this._colorBrewerName][5][i];
-					}
-				}
-				return "#7F7F7F";
-			},
+	    _getColor : function(geo,val){
+                return colors.getColor(colorbrewer[this._colorBrewerName], geo, val);
+	    },
 
 			_refresh : function(){
 
@@ -363,6 +374,11 @@ define([
 				}
 				this._computeLegend();
 			},
+
+
+            getPropertyData: function() {
+                return this._properties_data[this._currentProperty];
+            },
 
 			_computeLegend : function() {
 				var currentProp = this._currentProperty,

@@ -1,3 +1,4 @@
+'use strict';
 require.config({
 
 	paths: {
@@ -6,6 +7,7 @@ require.config({
 		'backbone': 'lib/backbone-min',
 		'underscore': 'lib/underscore-min',
 		'bootstrap': 'lib/bootstrap/bootstrap.min',
+		'tourLib' : 'lib/bootstrap-tour/bootstrap-tour.min',
 		'leaflet': 'lib/leaflet-0.7.3/leaflet',
 		'leaflet.ajax': 'lib/leaflet.ajax',
 		'mapSync': 'lib/L.Map.Sync',
@@ -17,11 +19,19 @@ require.config({
 		'rainbow': 'lib/rainbowvis',
 		'topojson': 'lib/topojson.v1.min',
 		'censusLayer': 'src/censusLayer',
-		'timeslider': 'src/timeslider',
+		//'timeslider': 'src/timeslider',
 		'script': 'src/script',
 		'routes': 'src/routes',
-		'legend': 'src/legend'
-	},
+		'legend': 'src/legend',
+		'iwindow': 'src/iwindow',
+              'hoverTract': 'src/hoverTract',
+              'subselect': 'src/subSelect',
+              'variables': 'src/variables',
+              'categories': 'src/categories',
+              'varMenus': 'src/varMenus',
+              'colors': 'src/colors',
+              'intro': 'src/intro'	
+       },
 
 	shim: {
 		'leaflet': {
@@ -41,14 +51,23 @@ require.config({
 		},
 		'bootstrap': {
 			deps: ['jquery']
+		},
+
+		'tourLib': {
+			deps: ['jquery', 'bootstrap']
 		}
+		
 	}
 
 });
 
-require(['script', 'routes', 'legend', 'bootstrap', 'jquery-ui'], function(S, routes, legend){
-	legend.init();
-	S.bootstrap();
-	routes.init();
+require(['script', 'routes', 'legend', "iwindow", "varMenus", 'intro','bootstrap', 'jquery-ui'],
 
+        function(S, routes, legend, iwindow, varMenus, intro){
+	    legend.init();
+	    S.bootstrap();
+	    routes.init();
+           iwindow.init();
+           varMenus.init();
+           intro.init();
 });
